@@ -2,76 +2,76 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>N빵 정산</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="toast" class="toast hidden"></div>
 
-  <main class="app-shell">
-    <section id="loginScreen" class="screen login-screen">
-      <div class="brand-card">
-        <div class="brand-icon">₩</div>
-        <h1>N빵 정산</h1>
-        <p>정산 이름을 입력하면 같은 이름의 정산방으로 접속합니다.</p>
+  <div id="loginScreen" class="screen active">
+    <main class="login-card">
+      <div class="brand">💸</div>
+      <h1>N빵 정산</h1>
+      <p>정산 이름을 입력하면 같은 이름의 정산방으로 접속합니다.</p>
+      <label>정산 이름을 입력하세요</label>
+      <input id="tripNameInput" type="text" placeholder="정산 이름을 입력하세요" autocomplete="off" />
+      <div id="recentWrap" class="recent-wrap hidden">
+        <label>최근 정산 이름</label>
+        <select id="recentSelect">
+          <option value="">최근 정산 이름 선택</option>
+        </select>
+      </div>
+      <button id="enterTripBtn" class="primary wide">입장하기</button>
+      <p class="hint">정산 이름이 곧 저장방 이름입니다. 다른 이름과 데이터가 섞이지 않습니다.</p>
+    </main>
+  </div>
 
-        <label class="field-label" for="settlementNameInput">정산 이름을 입력하세요</label>
-        <input id="settlementNameInput" class="text-input" type="text" autocomplete="off" placeholder="정산 이름을 입력하세요" />
+  <div id="appScreen" class="screen">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">현재 정산</p>
+        <h2 id="tripTitle">-</h2>
+      </div>
+      <button id="changeTripBtn" class="ghost">변경</button>
+    </header>
 
-        <button id="enterBtn" class="primary-btn">입장하기</button>
-
-        <div id="recentWrap" class="recent-wrap hidden">
-          <label class="field-label" for="recentSelect">최근 정산 이름</label>
-          <select id="recentSelect" class="text-input">
-            <option value="">최근 정산 이름 선택</option>
-          </select>
-        </div>
+    <section class="summary-card">
+      <div>
+        <span>인원</span>
+        <strong id="memberCount">0명</strong>
+      </div>
+      <div>
+        <span>정산</span>
+        <strong id="expenseCount">0건</strong>
+      </div>
+      <div>
+        <span>총액</span>
+        <strong id="totalAmount">0원</strong>
       </div>
     </section>
 
-    <section id="mainScreen" class="screen main-screen hidden">
-      <header class="top-bar">
-        <div>
-          <div class="small-title">현재 정산</div>
-          <h2 id="currentSettlementName">-</h2>
-        </div>
-        <button id="changeRoomBtn" class="ghost-btn">변경</button>
-      </header>
-
-      <section class="summary-card">
-        <div>
-          <span class="summary-label">등록된 인원</span>
-          <strong id="memberCount">0명</strong>
-        </div>
-        <div>
-          <span class="summary-label">정산 내역</span>
-          <strong id="expenseCount">0건</strong>
-        </div>
-      </section>
-
-      <section class="list-section">
-        <div class="section-title-row">
-          <h3>정산 내역</h3>
-          <span>날짜순으로 정산 내역이 표시됩니다.</span>
-        </div>
-        <div id="expenseList" class="expense-list"></div>
-      </section>
-
-      <nav class="bottom-nav" aria-label="하단 버튼">
-        <button id="addExpenseBtn">정산추가</button>
-        <button id="deleteExpenseBtn">정산삭제</button>
-        <button id="checkSettlementBtn">정산확인</button>
-        <button id="manageMembersBtn">인원추가</button>
-      </nav>
+    <section class="content-section">
+      <div class="section-title">
+        <h3>정산 내역</h3>
+        <span id="syncState">연결 대기</span>
+      </div>
+      <div id="expenseList" class="expense-list empty">아직 등록된 정산이 없습니다.</div>
     </section>
-  </main>
+
+    <nav class="bottom-nav">
+      <button id="addExpenseBtn">➕<span>정산추가</span></button>
+      <button id="deleteExpenseBtn">🗑️<span>정산삭제</span></button>
+      <button id="checkSettlementBtn">✅<span>정산확인</span></button>
+      <button id="manageMembersBtn">👥<span>인원추가</span></button>
+    </nav>
+  </div>
 
   <div id="modalBackdrop" class="modal-backdrop hidden">
-    <div class="modal-card" role="dialog" aria-modal="true">
-      <div class="modal-header">
-        <h3 id="modalTitle"></h3>
-        <button id="modalCloseBtn" class="icon-btn" aria-label="닫기">×</button>
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="modalTitle">제목</h3>
+        <button id="modalCloseBtn" class="icon-btn">✕</button>
       </div>
       <div id="modalBody" class="modal-body"></div>
     </div>
