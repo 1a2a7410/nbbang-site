@@ -335,3 +335,21 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); box-sh
   text-decoration: none;
   opacity: .75;
 }
+
+
+.expense-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.edit-expense-btn {
+  background: #f1f5ff;
+  color: var(--primary);
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 900;
+}
+.edit-expense-btn:active {
+  transform: scale(.98);
+}

@@ -171,8 +171,15 @@ function render() {
         <div>1인당: <b>${won(e.share)}</b></div>
         <div class="badges">${(e.participants || []).map(p => `<span class="badge">${escapeHtml(p)}</span>`).join('')}</div>
       </div>
+      <div class="expense-actions">
+        <button class="edit-expense-btn" type="button" data-edit-expense="${escapeAttr(e.id)}">정산 수정</button>
+      </div>
     </article>
   `).join('');
+
+  document.querySelectorAll('[data-edit-expense]').forEach(btn => {
+    btn.addEventListener('click', () => openEditExpenseModal(btn.dataset.editExpense));
+  });
 }
 
 function openModal(title, html) {
@@ -300,6 +307,85 @@ async function addExpense() {
   const expense = { id: uid(), date, place, payer, participants, total, share, createdAt: Date.now() };
   await saveTrip({ expenses: [...tripData.expenses, expense] });
   alert('정산이 추가되었습니다.');
+  closeModal();
+}
+
+
+function openEditExpenseModal(id) {
+  const expense = tripData.expenses.find(e => e.id === id);
+  if (!expense) return alert('수정할 정산을 찾을 수 없습니다.');
+  if (tripData.members.length < 1) return alert('정산을 추가하려면 인원을 먼저 추가해주세요.');
+
+  const selectedParticipants = Array.isArray(expense.participants) ? expense.participants : [];
+  openModal('정산 수정', `
+    <div class="form-grid">
+      <label>날짜</label>
+      <input id="editExpenseDate" type="date" value="${escapeAttr(expense.date || new Date().toISOString().slice(0, 10))}" />
+      <label>장소(품목)</label>
+      <input id="editExpensePlace" placeholder="장소(품목)를(을) 입력하세요" value="${escapeAttr(expense.place || '')}" />
+      <label>결제자</label>
+      <select id="editExpensePayer">
+        <option value="">결제자를 선택하세요</option>
+        ${tripData.members.map(m => `<option value="${escapeAttr(m)}" ${m === expense.payer ? 'selected' : ''}>${escapeHtml(m)}</option>`).join('')}
+      </select>
+      <label>부담자</label>
+      <div class="checks" id="editParticipantChecks">
+        ${tripData.members.map((m, i) => `
+          <label class="check-item" for="edit_participant_${i}">
+            <input id="edit_participant_${i}" class="participant-checkbox" type="checkbox" name="editParticipants" value="${escapeAttr(m)}" ${selectedParticipants.includes(m) ? 'checked' : ''} />
+            <span>${escapeHtml(m)}</span>
+          </label>
+        `).join('')}
+      </div>
+      <label>총 금액</label>
+      <input id="editExpenseTotal" type="number" inputmode="numeric" placeholder="총 금액을 입력하세요" value="${Number(expense.total || 0)}" />
+      <input id="editExpenseSharePreview" type="text" value="자동 계산됩니다" readonly />
+      <button id="confirmEditExpense" class="primary">확인</button>
+    </div>
+  `);
+
+  const updateShare = () => {
+    const total = Number($('editExpenseTotal').value);
+    const count = document.querySelectorAll('input[name="editParticipants"]:checked').length;
+    $('editExpenseSharePreview').value = total > 0 && count > 0 ? won(total / count) : '자동 계산됩니다';
+  };
+  $('editExpenseTotal').addEventListener('input', updateShare);
+  document.querySelectorAll('input[name="editParticipants"]').forEach(input => input.addEventListener('change', updateShare));
+  $('confirmEditExpense').onclick = () => updateExpense(id);
+  updateShare();
+}
+
+async function updateExpense(id) {
+  const date = $('editExpenseDate').value;
+  const place = $('editExpensePlace').value.trim();
+  const payer = $('editExpensePayer').value;
+  const participants = [...document.querySelectorAll('input[name="editParticipants"]:checked')].map(el => el.value);
+  const total = Number($('editExpenseTotal').value);
+
+  if (!date) return alert('날짜를 입력해주세요.');
+  if (!place) return alert('장소를 입력해주세요.');
+  if (!payer) return alert('결제자를 선택해주세요.');
+  if (!participants.length) return alert('부담자를 1명 이상 선택해주세요.');
+  if (!total) return alert('총 금액을 입력해주세요.');
+  if (total <= 0) return alert('총 금액은 0원보다 커야 합니다.');
+
+  const share = Math.round(total / participants.length);
+  const nextExpenses = tripData.expenses.map(e => {
+    if (e.id !== id) return e;
+    return {
+      ...e,
+      date,
+      place,
+      payer,
+      participants,
+      total,
+      share,
+      updatedAt: Date.now()
+    };
+  });
+
+  await saveTrip({ expenses: nextExpenses });
+  alert('정산이 수정되었습니다.');
   closeModal();
 }
 
