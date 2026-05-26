@@ -310,18 +310,63 @@ async function deleteExpense(id) {
 
 function openSettlementModal() {
   const result = calculateSettlement();
-  if (!result.length) {
-    openModal('정산 확인', '<p class="small">모든 정산이 완료되었습니다.<br>아직 정산할 금액이 없습니다.</p>');
+  const members = [...tripData.members];
+
+  if (!members.length) {
+    openModal('정산 확인', '<p class="small">등록된 인원이 없습니다.<br>인원을 먼저 추가해주세요.</p>');
     return;
   }
-  const rows = result.map((r, index) => {
+
+  const memberRows = members.map(member => {
+    const obligations = result.filter(r => r.from === member);
+    const total = obligations.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    const isDone = obligations.length === 0 || obligations.every(r => Boolean(tripData.settlementChecks[settlementKey(r)]));
+    const summary = obligations.length ? `${obligations.length}건 · ${won(total)}` : '송금할 내역 없음';
+
+    return `
+      <button class="settlement-person-row" type="button" data-settlement-person="${escapeAttr(member)}">
+        <input class="person-done-check" type="checkbox" ${isDone ? 'checked' : ''} disabled aria-label="${escapeAttr(member)} 완료 상태" />
+        <div class="settlement-person-main">
+          <div class="settlement-person-name">${escapeHtml(member)}</div>
+          <div class="settlement-person-summary">${summary}</div>
+        </div>
+        <span class="settlement-person-arrow">›</span>
+      </button>
+    `;
+  }).join('');
+
+  openModal('정산 확인', `
+    <p class="small">최종 정산 결과<br>이름을 누르면 본인이 송금해야 할 내역만 확인할 수 있습니다.<br>모든 송금 체크가 완료되면 이름 옆 체크표시가 활성화됩니다.</p>
+    <div class="settlement-count">등록 인원 ${members.length}명</div>
+    <div class="settlement-person-list">${memberRows}</div>
+  `);
+
+  document.querySelectorAll('[data-settlement-person]').forEach(btn => {
+    btn.addEventListener('click', () => openPersonalSettlementModal(btn.dataset.settlementPerson));
+  });
+}
+
+function openPersonalSettlementModal(member) {
+  const result = calculateSettlement().filter(r => r.from === member);
+
+  if (!result.length) {
+    openModal('정산 확인', `
+      <button class="back-link" type="button" id="backToSettlementMembers">‹ 인원 목록</button>
+      <p class="small"><b>${escapeHtml(member)}</b>님의 송금 내역<br>현재 송금할 금액이 없습니다.</p>
+    `);
+    $('backToSettlementMembers').onclick = openSettlementModal;
+    return;
+  }
+
+  const allDone = result.every(r => Boolean(tripData.settlementChecks[settlementKey(r)]));
+  const rows = result.map(r => {
     const key = settlementKey(r);
     const done = Boolean(tripData.settlementChecks[key]);
     return `
-      <label class="settlement-check-row" data-settlement-row="${index + 1}">
+      <label class="settlement-check-row personal-row">
         <input type="checkbox" data-settlement-key="${escapeAttr(key)}" ${done ? 'checked' : ''} />
         <div>
-          <div class="settlement-names">${escapeHtml(r.from)} → ${escapeHtml(r.to)}</div>
+          <div class="settlement-names">${escapeHtml(r.to)}에게</div>
           <div class="settlement-status ${done ? 'done' : ''}">${done ? '완료' : '미완료'}</div>
         </div>
         <strong>${won(r.amount)}</strong>
@@ -330,10 +375,19 @@ function openSettlementModal() {
   }).join('');
 
   openModal('정산 확인', `
-    <p class="small">최종 정산 결과<br>아래 금액을 송금 시 전체 정산이 완료됩니다.<br>체크한 항목은 실시간으로 완료된 송금으로 표시됩니다.</p>
+    <button class="back-link" type="button" id="backToSettlementMembers">‹ 인원 목록</button>
+    <div class="personal-settlement-head">
+      <input class="person-done-check large" type="checkbox" ${allDone ? 'checked' : ''} disabled />
+      <div>
+        <div class="personal-title">${escapeHtml(member)}</div>
+        <p class="small">${escapeHtml(member)}님이 송금해야 할 내역입니다.</p>
+      </div>
+    </div>
     <div class="settlement-count">전체 ${result.length}건</div>
     <div class="settlement-list">${rows}</div>
   `);
+
+  $('backToSettlementMembers').onclick = openSettlementModal;
   document.querySelectorAll('[data-settlement-key]').forEach(input => {
     input.addEventListener('change', async () => {
       const key = input.dataset.settlementKey;
@@ -342,7 +396,7 @@ function openSettlementModal() {
       else delete nextChecks[key];
       await saveTrip({ settlementChecks: nextChecks });
       alert('정산 완료 상태가 저장되었습니다.');
-      openSettlementModal();
+      openPersonalSettlementModal(member);
     });
   });
 }
