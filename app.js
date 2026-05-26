@@ -15,7 +15,7 @@ const db = getFirestore(app);
 
 let currentTripId = '';
 let currentTripName = '';
-let tripData = { members: [], expenses: [], settlementChecks: {} };
+let tripData = { members: [], memberInfo: {}, expenses: [], settlementChecks: {} };
 let unsubscribeTrip = null;
 
 const RECENT_KEY = 'nbbang_recent_names_v2';
@@ -63,6 +63,7 @@ async function enterTrip() {
       await setDoc(ref, {
         tripName: name,
         members: [],
+        memberInfo: {},
         expenses: [],
         settlementChecks: {},
         createdAt: serverTimestamp(),
@@ -96,6 +97,7 @@ function listenTrip() {
     const data = snap.data();
     tripData = {
       members: Array.isArray(data.members) ? data.members : [],
+      memberInfo: data.memberInfo && typeof data.memberInfo === 'object' ? data.memberInfo : {},
       expenses: Array.isArray(data.expenses) ? data.expenses : [],
       settlementChecks: data.settlementChecks && typeof data.settlementChecks === 'object' ? data.settlementChecks : {}
     };
@@ -185,6 +187,10 @@ function openMemberModal() {
     <div class="form-grid">
       <label>이름을 입력하세요</label>
       <input id="newMemberName" placeholder="이름을 입력하세요" />
+      <label>은행명</label>
+      <input id="newMemberBank" placeholder="은행명을 입력하세요" />
+      <label>계좌번호</label>
+      <input id="newMemberAccount" inputmode="numeric" placeholder="계좌번호를 입력하세요" />
       <button id="confirmAddMember" class="primary">추가</button>
       <label>등록된 인원</label>
       <div id="memberList">${renderMemberRows()}</div>
@@ -198,26 +204,42 @@ function openMemberModal() {
 
 function renderMemberRows() {
   if (!tripData.members.length) return '<p class="small">아직 등록된 인원이 없습니다.<br>인원을 먼저 추가해주세요.</p>';
-  return tripData.members.map(name => `
-    <div class="member-row">
-      <b>${escapeHtml(name)}</b>
-      <button class="danger" data-remove-member="${escapeAttr(name)}">삭제</button>
-    </div>
-  `).join('');
+  return tripData.members.map(name => {
+    const info = getMemberInfo(name);
+    const detail = [info.bank, info.account].filter(Boolean).join(' · ');
+    return `
+      <div class="member-row">
+        <div>
+          <b>${escapeHtml(name)}</b>
+          ${detail ? `<div class="member-account-preview">${escapeHtml(detail)}</div>` : ''}
+        </div>
+        <button class="danger" data-remove-member="${escapeAttr(name)}">삭제</button>
+      </div>
+    `;
+  }).join('');
 }
 
 async function addMember() {
   const name = $('newMemberName').value.trim();
+  const bank = $('newMemberBank').value.trim();
+  const account = $('newMemberAccount').value.trim();
   if (!name) return alert('이름을 입력해주세요.');
   if (tripData.members.includes(name)) return alert('이미 등록된 이름입니다.');
-  await saveTrip({ members: [...tripData.members, name].sort((a, b) => a.localeCompare(b, 'ko-KR')) });
+  const nextMembers = [...tripData.members, name].sort((a, b) => a.localeCompare(b, 'ko-KR'));
+  const nextMemberInfo = {
+    ...(tripData.memberInfo || {}),
+    [name]: { bank, account }
+  };
+  await saveTrip({ members: nextMembers, memberInfo: nextMemberInfo });
   alert('인원이 추가되었습니다.');
   closeModal();
 }
 
 async function removeMember(name) {
   if (!confirm(`${name} 인원을 삭제할까요?`)) return;
-  await saveTrip({ members: tripData.members.filter(m => m !== name) });
+  const nextMemberInfo = { ...(tripData.memberInfo || {}) };
+  delete nextMemberInfo[name];
+  await saveTrip({ members: tripData.members.filter(m => m !== name), memberInfo: nextMemberInfo });
   alert('인원이 삭제되었습니다.');
   closeModal();
 }
@@ -362,11 +384,14 @@ function openPersonalSettlementModal(member) {
   const rows = result.map(r => {
     const key = settlementKey(r);
     const done = Boolean(tripData.settlementChecks[key]);
+    const info = getMemberInfo(r.to);
+    const accountText = formatAccountInfo(info);
     return `
       <label class="settlement-check-row personal-row">
         <input type="checkbox" data-settlement-key="${escapeAttr(key)}" ${done ? 'checked' : ''} />
         <div>
           <div class="settlement-names">${escapeHtml(r.to)}에게</div>
+          ${accountText ? `<button type="button" class="account-copy" data-copy-account="${escapeAttr(accountText)}">${escapeHtml(accountText)}</button>` : `<div class="account-copy muted">계좌 정보 없음</div>`}
           <div class="settlement-status ${done ? 'done' : ''}">${done ? '완료' : '미완료'}</div>
         </div>
         <strong>${won(r.amount)}</strong>
@@ -399,6 +424,51 @@ function openPersonalSettlementModal(member) {
       openPersonalSettlementModal(member);
     });
   });
+
+  document.querySelectorAll('[data-copy-account]').forEach(btn => {
+    btn.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const text = btn.dataset.copyAccount || '';
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        alert('계좌 정보가 복사되었습니다.');
+      } catch {
+        fallbackCopyText(text);
+        alert('계좌 정보가 복사되었습니다.');
+      }
+    });
+  });
+}
+
+
+function getMemberInfo(name) {
+  const info = tripData.memberInfo && typeof tripData.memberInfo === 'object' ? tripData.memberInfo[name] : null;
+  return {
+    bank: String(info?.bank || '').trim(),
+    account: String(info?.account || '').trim()
+  };
+}
+
+function formatAccountInfo(info) {
+  const bank = String(info?.bank || '').trim();
+  const account = String(info?.account || '').trim();
+  if (!bank && !account) return '';
+  if (bank && account) return `${bank} ${account}`;
+  return bank || account;
+}
+
+function fallbackCopyText(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  textarea.remove();
 }
 
 function calculateSettlement() {

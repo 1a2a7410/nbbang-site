@@ -309,3 +309,29 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); box-sh
 .personal-row .settlement-names {
   font-size: 15px;
 }
+
+.member-account-preview {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.account-copy {
+  width: auto;
+  max-width: 100%;
+  display: inline-block;
+  margin-top: 3px;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.account-copy.muted {
+  text-decoration: none;
+  opacity: .75;
+}
