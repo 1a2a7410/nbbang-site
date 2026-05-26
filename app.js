@@ -169,10 +169,10 @@ function render() {
         <div>결제자: <b>${escapeHtml(e.payer)}</b></div>
         <div>부담자: <b>${Number(e.participants?.length || 0)}명</b></div>
         <div>1인당: <b>${won(e.share)}</b></div>
-        <div class="badges">${(e.participants || []).map(p => `<span class="badge">${escapeHtml(p)}</span>`).join('')}</div>
-      </div>
-      <div class="expense-actions">
-        <button class="edit-expense-btn" type="button" data-edit-expense="${escapeAttr(e.id)}">정산 수정</button>
+        <div class="expense-footer">
+          <div class="badges">${renderParticipantBadges(e.participants || [])}</div>
+          <button class="edit-expense-btn" type="button" data-edit-expense="${escapeAttr(e.id)}">정산 수정</button>
+        </div>
       </div>
     </article>
   `).join('');
@@ -180,6 +180,17 @@ function render() {
   document.querySelectorAll('[data-edit-expense]').forEach(btn => {
     btn.addEventListener('click', () => openEditExpenseModal(btn.dataset.editExpense));
   });
+}
+
+
+function renderParticipantBadges(participants) {
+  const list = Array.isArray(participants) ? participants.filter(Boolean) : [];
+  if (!list.length) return '';
+  const visibleCount = list.length > 3 ? 2 : list.length;
+  const visible = list.slice(0, visibleCount).map(p => `<span class="badge">${escapeHtml(p)}</span>`);
+  const hiddenCount = list.length - visibleCount;
+  if (hiddenCount > 0) visible.push(`<span class="badge more-badge">+${hiddenCount}명</span>`);
+  return visible.join('');
 }
 
 function openModal(title, html) {
