@@ -1,11 +1,7 @@
-# N빵 정산
+# N빵 정산 사이트
 
-Firebase Firestore 기반 실시간 N빵 정산 사이트입니다.
-
-## 업로드 파일
-- index.html
-- style.css
-- app.js
-- firebase-config.js
-
-GitHub Pages에는 ZIP 파일이 아니라 위 파일들을 압축 해제 후 업로드하세요.
+수정 내용:
+- 입장하기 버튼이 동작하지 않던 문제 해결
+- Firebase SDK 로딩 안정화
+- 최근 정산 이름 최대 3개 표시 유지
+- 기존 UI/기능/문구 유지

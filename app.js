@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import {
   getFirestore,
   doc,
@@ -8,7 +8,7 @@ import {
   updateDoc,
   onSnapshot,
   serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
