@@ -348,43 +348,58 @@ function openSettlementModal() {
 }
 
 function calculateSettlement() {
-  const balance = {};
-  tripData.members.forEach(m => balance[m] = 0);
+  const pairDebts = {};
 
   for (const e of tripData.expenses) {
     const participants = Array.isArray(e.participants) ? e.participants : [];
-    if (!participants.length) continue;
+    const payer = e.payer;
+    if (!payer || !participants.length) continue;
+
     const total = Number(e.total || 0);
+    if (!total || total <= 0) continue;
+
     const share = Math.round(total / participants.length);
 
     for (const person of participants) {
-      if (!(person in balance)) balance[person] = 0;
-      balance[person] -= share;
+      if (!person || person === payer) continue;
+      const key = `${person}__${payer}`;
+      pairDebts[key] = (pairDebts[key] || 0) + share;
     }
-    if (!(e.payer in balance)) balance[e.payer] = 0;
-    balance[e.payer] += share * participants.length;
   }
 
-  const debtors = Object.entries(balance)
-    .filter(([, v]) => v < 0)
-    .map(([name, amount]) => ({ name, amount: Math.round(-amount) }))
-    .sort((a, b) => b.amount - a.amount);
-  const creditors = Object.entries(balance)
-    .filter(([, v]) => v > 0)
-    .map(([name, amount]) => ({ name, amount: Math.round(amount) }))
-    .sort((a, b) => b.amount - a.amount);
+  const names = Array.from(new Set([
+    ...tripData.members,
+    ...tripData.expenses.flatMap(e => [e.payer, ...(Array.isArray(e.participants) ? e.participants : [])])
+  ].filter(Boolean)));
 
   const result = [];
-  let i = 0, j = 0;
-  while (i < debtors.length && j < creditors.length) {
-    const amount = Math.min(debtors[i].amount, creditors[j].amount);
-    if (amount > 0) result.push({ from: debtors[i].name, to: creditors[j].name, amount });
-    debtors[i].amount -= amount;
-    creditors[j].amount -= amount;
-    if (debtors[i].amount <= 0) i++;
-    if (creditors[j].amount <= 0) j++;
+  const processed = new Set();
+
+  for (let i = 0; i < names.length; i++) {
+    for (let j = i + 1; j < names.length; j++) {
+      const a = names[i];
+      const b = names[j];
+      const abKey = `${a}__${b}`;
+      const baKey = `${b}__${a}`;
+      if (processed.has(abKey) || processed.has(baKey)) continue;
+
+      const ab = Math.round(pairDebts[abKey] || 0);
+      const ba = Math.round(pairDebts[baKey] || 0);
+      const net = ab - ba;
+
+      if (net > 0) result.push({ from: a, to: b, amount: net });
+      if (net < 0) result.push({ from: b, to: a, amount: Math.abs(net) });
+
+      processed.add(abKey);
+      processed.add(baKey);
+    }
   }
-  return result;
+
+  return result.sort((a, b) => {
+    if (a.to !== b.to) return a.to.localeCompare(b.to, 'ko');
+    if (a.from !== b.from) return a.from.localeCompare(b.from, 'ko');
+    return b.amount - a.amount;
+  });
 }
 
 function settlementKey(r) {
