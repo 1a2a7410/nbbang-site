@@ -251,7 +251,7 @@ function renderExpenseList() {
       </div>
       <div class="meta">
         <div><b>${TEXT.payer}</b> · ${escapeHtml(expense.payer)}</div>
-        <div><b>${TEXT.participants}</b> · ${expense.participants.map(escapeHtml).join(", ")} (${expense.participants.length}${TEXT.peopleUnit})</div>
+        <div><b>${TEXT.participants}</b> · ${expense.participants.length}${TEXT.peopleUnit}<div class="badges">${expense.participants.map((p) => `<span class="badge">${escapeHtml(p)}</span>`).join("")}</div></div>
         <div><b>${TEXT.perPerson}</b> · ${money(expense.splitAmount)}</div>
       </div>
     </article>
