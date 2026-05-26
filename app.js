@@ -170,7 +170,7 @@ function render() {
         <div>부담자: <b>${Number(e.participants?.length || 0)}명</b></div>
         <div>1인당: <b>${won(e.share)}</b></div>
         <div class="expense-footer">
-          <div class="badges">${renderParticipantBadges(e.participants || [])}</div>
+          <div class="badges">${renderParticipantBadges(e.participants || [], e.id)}</div>
           <button class="edit-expense-btn" type="button" data-edit-expense="${escapeAttr(e.id)}">정산 수정</button>
         </div>
       </div>
@@ -180,17 +180,35 @@ function render() {
   document.querySelectorAll('[data-edit-expense]').forEach(btn => {
     btn.addEventListener('click', () => openEditExpenseModal(btn.dataset.editExpense));
   });
+  document.querySelectorAll('[data-more-participants]').forEach(btn => {
+    btn.addEventListener('click', () => openHiddenParticipantsModal(btn.dataset.moreParticipants));
+  });
 }
 
 
-function renderParticipantBadges(participants) {
+function renderParticipantBadges(participants, expenseId) {
   const list = Array.isArray(participants) ? participants.filter(Boolean) : [];
   if (!list.length) return '';
-  const visibleCount = list.length > 3 ? 2 : list.length;
+  const visibleCount = list.length > 4 ? 4 : list.length;
   const visible = list.slice(0, visibleCount).map(p => `<span class="badge">${escapeHtml(p)}</span>`);
   const hiddenCount = list.length - visibleCount;
-  if (hiddenCount > 0) visible.push(`<span class="badge more-badge">+${hiddenCount}명</span>`);
+  if (hiddenCount > 0) {
+    visible.push(`<button class="badge more-badge" type="button" data-more-participants="${escapeAttr(expenseId)}">+${hiddenCount}명</button>`);
+  }
   return visible.join('');
+}
+
+function openHiddenParticipantsModal(expenseId) {
+  const expense = tripData.expenses.find(e => e.id === expenseId);
+  if (!expense) return;
+  const participants = Array.isArray(expense.participants) ? expense.participants.filter(Boolean) : [];
+  const hidden = participants.slice(4);
+  openModal('추가 부담자', `
+    <p class="hint">화면에 표시되지 않은 부담자입니다.</p>
+    <div class="member-list">
+      ${hidden.length ? hidden.map(name => `<div class="member-row"><b>${escapeHtml(name)}</b></div>`).join('') : '<p class="empty small">추가 부담자가 없습니다.</p>'}
+    </div>
+  `);
 }
 
 function openModal(title, html) {

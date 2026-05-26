@@ -115,7 +115,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); box-sh
 .meta { margin-top: 12px; display: grid; gap: 7px; font-size: 14px; color: #343946; }
 .badges { display: flex; gap: 6px; flex-wrap: nowrap; min-width: 0; overflow: hidden; }
 .badge { background: #eef1f7; border-radius: 999px; padding: 5px 8px; font-size: 12px; white-space: nowrap; flex: 0 0 auto; }
-.more-badge { color: var(--primary); font-weight: 900; }
+.more-badge { color: var(--primary); font-weight: 900; border: 0; cursor: pointer; font-family: inherit; }
 .expense-footer {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
