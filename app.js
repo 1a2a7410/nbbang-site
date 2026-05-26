@@ -45,6 +45,7 @@ $('recentTripSelect').addEventListener('change', (e) => {
 });
 
 renderRecentTrips();
+window.addEventListener('resize', () => requestAnimationFrame(adjustParticipantBadges));
 
 async function enterTrip() {
   const name = $('tripNameInput').value.trim();
@@ -180,8 +181,12 @@ function render() {
   document.querySelectorAll('[data-edit-expense]').forEach(btn => {
     btn.addEventListener('click', () => openEditExpenseModal(btn.dataset.editExpense));
   });
+  requestAnimationFrame(adjustParticipantBadges);
   document.querySelectorAll('[data-more-participants]').forEach(btn => {
-    btn.addEventListener('click', () => openHiddenParticipantsModal(btn.dataset.moreParticipants));
+    btn.addEventListener('click', () => {
+      const hiddenNames = (btn.dataset.hiddenNames || '').split('|').filter(Boolean);
+      openHiddenParticipantsModal(btn.dataset.moreParticipants, hiddenNames);
+    });
   });
 }
 
@@ -189,20 +194,71 @@ function render() {
 function renderParticipantBadges(participants, expenseId) {
   const list = Array.isArray(participants) ? participants.filter(Boolean) : [];
   if (!list.length) return '';
-  const visibleCount = list.length > 4 ? 4 : list.length;
-  const visible = list.slice(0, visibleCount).map(p => `<span class="badge">${escapeHtml(p)}</span>`);
-  const hiddenCount = list.length - visibleCount;
-  if (hiddenCount > 0) {
-    visible.push(`<button class="badge more-badge" type="button" data-more-participants="${escapeAttr(expenseId)}">+${hiddenCount}명</button>`);
-  }
-  return visible.join('');
+  const badges = list.map(p => `<span class="badge participant-badge" data-participant-name="${escapeAttr(p)}">${escapeHtml(p)}</span>`);
+  badges.push(`<button class="badge more-badge hidden-more" type="button" data-more-participants="${escapeAttr(expenseId)}" data-hidden-names="">+0명</button>`);
+  return badges.join('');
 }
 
-function openHiddenParticipantsModal(expenseId) {
-  const expense = tripData.expenses.find(e => e.id === expenseId);
-  if (!expense) return;
-  const participants = Array.isArray(expense.participants) ? expense.participants.filter(Boolean) : [];
-  const hidden = participants.slice(4);
+function adjustParticipantBadges() {
+  document.querySelectorAll('.expense-footer').forEach(footer => {
+    const badgesWrap = footer.querySelector('.badges');
+    const editBtn = footer.querySelector('.edit-expense-btn');
+    const moreBtn = footer.querySelector('.more-badge');
+    if (!badgesWrap || !editBtn || !moreBtn) return;
+
+    const badges = [...badgesWrap.querySelectorAll('.participant-badge')];
+    badges.forEach(badge => badge.classList.remove('badge-hidden'));
+    moreBtn.classList.add('hidden-more');
+    moreBtn.dataset.hiddenNames = '';
+
+    const footerWidth = footer.clientWidth || 0;
+    const gap = 8;
+    const availableWidth = Math.max(0, footerWidth - editBtn.offsetWidth - gap);
+    if (!availableWidth) return;
+
+    let totalWidth = 0;
+    const badgeGap = 6;
+    badges.forEach((badge, index) => {
+      totalWidth += badge.offsetWidth + (index > 0 ? badgeGap : 0);
+    });
+
+    if (totalWidth <= availableWidth) return;
+
+    moreBtn.classList.remove('hidden-more');
+    const moreWidth = Math.max(moreBtn.offsetWidth, 48);
+    let usedWidth = moreWidth;
+    let visibleCount = 0;
+
+    for (const badge of badges) {
+      const nextWidth = usedWidth + badge.offsetWidth + (visibleCount > 0 ? badgeGap : 0);
+      if (nextWidth <= availableWidth) {
+        usedWidth = nextWidth;
+        visibleCount += 1;
+      } else {
+        break;
+      }
+    }
+
+    if (visibleCount >= badges.length) {
+      moreBtn.classList.add('hidden-more');
+      return;
+    }
+
+    const hiddenBadges = badges.slice(visibleCount);
+    hiddenBadges.forEach(badge => badge.classList.add('badge-hidden'));
+    const hiddenNames = hiddenBadges.map(badge => badge.dataset.participantName || badge.textContent.trim());
+    moreBtn.textContent = `+${hiddenNames.length}명`;
+    moreBtn.dataset.hiddenNames = hiddenNames.join('|');
+  });
+}
+
+function openHiddenParticipantsModal(expenseId, hiddenNames = []) {
+  let hidden = Array.isArray(hiddenNames) ? hiddenNames.filter(Boolean) : [];
+  if (!hidden.length) {
+    const expense = tripData.expenses.find(e => e.id === expenseId);
+    const participants = Array.isArray(expense?.participants) ? expense.participants.filter(Boolean) : [];
+    hidden = participants;
+  }
   openModal('추가 부담자', `
     <p class="hint">화면에 표시되지 않은 부담자입니다.</p>
     <div class="member-list">
