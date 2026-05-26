@@ -314,24 +314,25 @@ function openSettlementModal() {
     openModal('정산 확인', '<p class="small">모든 정산이 완료되었습니다.<br>아직 정산할 금액이 없습니다.</p>');
     return;
   }
+  const rows = result.map((r, index) => {
+    const key = settlementKey(r);
+    const done = Boolean(tripData.settlementChecks[key]);
+    return `
+      <label class="settlement-check-row" data-settlement-row="${index + 1}">
+        <input type="checkbox" data-settlement-key="${escapeAttr(key)}" ${done ? 'checked' : ''} />
+        <div>
+          <div class="settlement-names">${escapeHtml(r.from)} → ${escapeHtml(r.to)}</div>
+          <div class="settlement-status ${done ? 'done' : ''}">${done ? '완료' : '미완료'}</div>
+        </div>
+        <strong>${won(r.amount)}</strong>
+      </label>
+    `;
+  }).join('');
+
   openModal('정산 확인', `
     <p class="small">최종 정산 결과<br>아래 금액을 송금 시 전체 정산이 완료됩니다.<br>체크한 항목은 실시간으로 완료된 송금으로 표시됩니다.</p>
-    <div class="settlement-list">
-      ${result.map(r => {
-        const key = settlementKey(r);
-        const done = Boolean(tripData.settlementChecks[key]);
-        return `
-          <label class="settlement-check-row">
-            <input type="checkbox" data-settlement-key="${escapeAttr(key)}" ${done ? 'checked' : ''} />
-            <div>
-              <div class="settlement-names">${escapeHtml(r.from)} → ${escapeHtml(r.to)}</div>
-              <div class="settlement-status ${done ? 'done' : ''}">${done ? '완료' : '미완료'}</div>
-            </div>
-            <strong>${won(r.amount)}</strong>
-          </label>
-        `;
-      }).join('')}
-    </div>
+    <div class="settlement-count">전체 ${result.length}건</div>
+    <div class="settlement-list">${rows}</div>
   `);
   document.querySelectorAll('[data-settlement-key]').forEach(input => {
     input.addEventListener('change', async () => {
