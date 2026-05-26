@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>실시간 N빵 정산</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="loginScreen" class="screen active">
+    <main class="login-card">
+      <div class="brand">💸</div>
+      <h1>실시간 N빵 정산</h1>
+      <p>같은 여행 이름을 입력한 사람끼리 실시간으로 정산을 공유합니다.</p>
+      <label>여행 이름</label>
+      <input id="tripNameInput" type="text" placeholder="예: 부산여행_2026" autocomplete="off" />
+      <button id="enterTripBtn" class="primary wide">입장하기</button>
+      <p class="hint">여행 이름이 곧 저장방 이름입니다. 다른 이름과 데이터가 섞이지 않습니다.</p>
+    </main>
+  </div>
+
+  <div id="appScreen" class="screen">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">현재 여행</p>
+        <h2 id="tripTitle">-</h2>
+      </div>
+      <button id="changeTripBtn" class="ghost">변경</button>
+    </header>
+
+    <section class="summary-card">
+      <div>
+        <span>인원</span>
+        <strong id="memberCount">0명</strong>
+      </div>
+      <div>
+        <span>정산</span>
+        <strong id="expenseCount">0건</strong>
+      </div>
+      <div>
+        <span>총액</span>
+        <strong id="totalAmount">0원</strong>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div class="section-title">
+        <h3>정산 내역</h3>
+        <span id="syncState">연결 대기</span>
+      </div>
+      <div id="expenseList" class="expense-list empty">아직 등록된 정산이 없습니다.</div>
+    </section>
+
+    <nav class="bottom-nav">
+      <button id="addExpenseBtn">➕<span>정산추가</span></button>
+      <button id="deleteExpenseBtn">🗑️<span>정산삭제</span></button>
+      <button id="checkSettlementBtn">✅<span>정산확인</span></button>
+      <button id="manageMembersBtn">👥<span>인원추가</span></button>
+    </nav>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="modalTitle">제목</h3>
+        <button id="modalCloseBtn" class="icon-btn">✕</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
