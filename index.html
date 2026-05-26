@@ -7,23 +7,15 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="toast" class="toast hidden"></div>
-
   <div id="loginScreen" class="screen active">
     <main class="login-card">
       <div class="brand">💸</div>
       <h1>N빵 정산</h1>
       <p>정산 이름을 입력하면 같은 이름의 정산방으로 접속합니다.</p>
-      <label>정산 이름을 입력하세요</label>
-      <input id="tripNameInput" type="text" placeholder="정산 이름을 입력하세요" autocomplete="off" />
-      <div id="recentWrap" class="recent-wrap hidden">
-        <label>최근 정산 이름</label>
-        <select id="recentSelect">
-          <option value="">최근 정산 이름 선택</option>
-        </select>
-      </div>
+      <label>정산 이름</label>
+      <input id="tripNameInput" type="text" placeholder="예: 제주여행" autocomplete="off" />
       <button id="enterTripBtn" class="primary wide">입장하기</button>
-      <p class="hint">정산 이름별로 데이터가 분리되어 저장됩니다.</p>
+      <p class="hint">정산 이름이 곧 저장방 이름입니다. 다른 이름과 데이터가 섞이지 않습니다.</p>
     </main>
   </div>
 
@@ -54,7 +46,7 @@
     <section class="content-section">
       <div class="section-title">
         <h3>정산 내역</h3>
-        <span id="syncState">연결 대기</span>
+        <span id="syncState">실시간 동기화</span>
       </div>
       <div id="expenseList" class="expense-list empty">아직 등록된 정산이 없습니다.</div>
     </section>
@@ -77,6 +69,7 @@
     </div>
   </div>
 
+  <script type="module" src="firebase-config.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

@@ -1,9 +1,10 @@
+// Firebase 콘솔에서 받은 firebaseConfig를 아래에 붙여넣으세요.
+// apiKey는 비밀번호가 아니지만, Firestore 보안 규칙 설정은 반드시 해야 합니다.
 export const firebaseConfig = {
-  apiKey: "AIzaSyCAfdITIDbtUFnEPds3ojohvYT1M-GchNM",
-  authDomain: "nbbang-a996c.firebaseapp.com",
-  projectId: "nbbang-a996c",
-  storageBucket: "nbbang-a996c.firebasestorage.app",
-  messagingSenderId: "154076490798",
-  appId: "1:154076490798:web:2c6558f67176f99f3383bf",
-  measurementId: "G-NZW1TK44C3"
+  apiKey: "여기에_apiKey",
+  authDomain: "여기에_authDomain",
+  projectId: "여기에_projectId",
+  storageBucket: "여기에_storageBucket",
+  messagingSenderId: "여기에_messagingSenderId",
+  appId: "여기에_appId"
 };
