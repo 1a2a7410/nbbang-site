@@ -11,10 +11,19 @@
     <main class="login-card">
       <div class="brand">💸</div>
       <h1>N빵 정산</h1>
-      <p>정산 이름을 입력하면 같은 이름의 정산방으로 접속합니다.</p>
-      <label>정산 이름</label>
-      <input id="tripNameInput" type="text" placeholder="예: 제주여행" autocomplete="off" />
+      <p class="lead">정산 이름을 입력하면 같은 이름의 정산방으로 접속합니다.</p>
+
+      <label for="tripNameInput">정산 이름</label>
+      <input id="tripNameInput" type="text" placeholder="정산 이름을 입력하세요" autocomplete="off" />
       <button id="enterTripBtn" class="primary wide">입장하기</button>
+
+      <div id="recentTripArea" class="recent-area hidden">
+        <label for="recentTripSelect">최근 정산 이름</label>
+        <select id="recentTripSelect">
+          <option value="">최근 정산 이름 선택</option>
+        </select>
+      </div>
+
       <p class="hint">정산 이름이 곧 저장방 이름입니다. 다른 이름과 데이터가 섞이지 않습니다.</p>
     </main>
   </div>
@@ -29,18 +38,9 @@
     </header>
 
     <section class="summary-card">
-      <div>
-        <span>인원</span>
-        <strong id="memberCount">0명</strong>
-      </div>
-      <div>
-        <span>정산</span>
-        <strong id="expenseCount">0건</strong>
-      </div>
-      <div>
-        <span>총액</span>
-        <strong id="totalAmount">0원</strong>
-      </div>
+      <div><span>인원</span><strong id="memberCount">0명</strong></div>
+      <div><span>정산</span><strong id="expenseCount">0건</strong></div>
+      <div><span>총액</span><strong id="totalAmount">0원</strong></div>
     </section>
 
     <section class="content-section">
@@ -69,7 +69,6 @@
     </div>
   </div>
 
-  <script type="module" src="firebase-config.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
